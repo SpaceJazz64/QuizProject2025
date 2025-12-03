@@ -1,16 +1,26 @@
 // ===== SELECT ELEMENTS =====
 const quizContainer = document.getElementById("quizContainer");
 const questionText = document.getElementById("questionText");
-const answersDiv   = document.getElementById("answers");
-const nextBtn      = document.getElementById("nextBtn");
+const answersDiv = document.getElementById("answers");
+const nextBtn = document.getElementById("nextBtn");
+const startQuizBtn = document.getElementById("startQuizBtn");
+const numQuestionsInput = document.getElementById("numQuestions");
+const difficultySelect = document.getElementById("difficulty");
 
 // ===== VARIABLES =====
 let questions = [];
 let currentIndex = 0;
 let score = 0;
 
-// ===== FETCH QUESTIONS FROM BACKEND =====
-async function loadQuestions() {
+// ===== START QUIZ =====
+startQuizBtn.addEventListener("click", () => {
+    const amount = parseInt(numQuestionsInput.value) || 10;
+    const difficulty = difficultySelect.value || "medium";
+    loadQuestions(amount, difficulty);
+});
+
+// ===== FETCH QUESTIONS FROM SERVER =====
+async function loadQuestions(amount = 10, difficulty = "medium") {
     try {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -19,22 +29,27 @@ async function loadQuestions() {
             return;
         }
 
-        console.log("Loading questions with token:", !!token);
-        const response = await fetch("/api/quiz", {
-            headers: {
-                "Authorization": "Bearer " + token
-            }
+        const response = await fetch(`/api/quiz?amount=${amount}&difficulty=${difficulty}`, {
+            headers: { "Authorization": "Bearer " + token }
         });
         const data = await response.json();
 
-        if (data.success) {
-            questions = data.questions;
-            showQuestion();
-        } else {
+        if (!data.success) {
             alert(data.message || "Could not load questions");
+            return;
         }
+
+        questions = data.questions;
+        currentIndex = 0;
+        score = 0;
+
+        document.querySelector(".quiz-settings").style.display = "none";
+        quizContainer.style.display = "block";
+
+        showQuestion();
     } catch (err) {
-        console.error("Error loading questions:", err);
+        console.error(err);
+        alert("Error loading questions");
     }
 }
 
@@ -51,38 +66,35 @@ function showQuestion() {
     const q = questions[currentIndex];
     questionText.textContent = `Q${currentIndex + 1}: ${q.question}`;
 
-    // Shuffle answer keys
-    const answerKeys = ["A", "B", "C", "D"];
-    shuffleArray(answerKeys);
-
-    // Create buttons with CORRECT MAPPING
-    answerKeys.forEach(key => {
+    const keys = ["A", "B", "C", "D"];
+    keys.forEach(key => {
         const btn = document.createElement("button");
         btn.textContent = q[key];
-        btn.dataset.key = key; // store actual key (A/B/C/D)
-        btn.addEventListener("click", (e) => selectAnswer(e.target.dataset.key));
+        btn.addEventListener("click", () => selectAnswer(key));
         answersDiv.appendChild(btn);
     });
 }
 
-// ===== USER SELECTED AN ANSWER =====
+// ===== HANDLE ANSWER SELECTION =====
 function selectAnswer(selectedKey) {
     const q = questions[currentIndex];
+    const keys = ["A", "B", "C", "D"];
 
-    // Count score
-    if (selectedKey === q.answer) {
-        score++;
-    }
-
-    // Highlight correct and incorrect
-    Array.from(answersDiv.children).forEach(btn => {
-        if (btn.dataset.key === q.answer) {
-            btn.style.backgroundColor = "#4CAF50"; // green
+    // Highlight buttons
+    Array.from(answersDiv.children).forEach((btn, i) => {
+        const key = keys[i];
+        if (key === q.answer) {
+            btn.style.backgroundColor = "#4CAF50"; // green = correct
+        } else if (key === selectedKey) {
+            btn.style.backgroundColor = "#f44336"; // red = wrong
         } else {
-            btn.style.backgroundColor = "#f44336"; // red
+            btn.style.backgroundColor = "#ddd"; // neutral
         }
         btn.disabled = true;
     });
+
+    // Update score if correct
+    if (selectedKey === q.answer) score++;
 
     nextBtn.style.display = "inline-block";
 }
@@ -95,23 +107,14 @@ nextBtn.addEventListener("click", () => {
 
 // ===== FINISH QUIZ =====
 async function finishQuiz() {
-    localStorage.setItem("lastScore", score);
-    localStorage.setItem("totalQuestions", questions.length);
-
     questionText.textContent = "Quiz Completed!";
     answersDiv.innerHTML = `<p>Your score: ${score}/${questions.length}</p>`;
     nextBtn.style.display = "none";
 
-    // Save score to backend (note endpoint: /api/save-score)
+    // Save score to server
     try {
         const token = localStorage.getItem("token");
-        if (!token) {
-            console.warn("No token found when saving score.");
-        }
-
-        console.log("About to send score:", score);
-
-        const res = await fetch("/api/save-score", {           // <-- endpoint corrected
+        await fetch("/api/save-score", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -119,14 +122,6 @@ async function finishQuiz() {
             },
             body: JSON.stringify({ score, totalQuestions: questions.length })
         });
-
-        // log network response for debugging
-        const responseData = await res.json();
-        console.log("Save-score response:", res.status, responseData);
-
-        if (!responseData.success) {
-            console.warn("Server responded with unsuccessful save:", responseData);
-        }
     } catch (err) {
         console.error("Could not save score", err);
     }
@@ -137,14 +132,3 @@ async function finishQuiz() {
     resultsBtn.className = "btn";
     answersDiv.appendChild(resultsBtn);
 }
-
-// ===== SHUFFLE ARRAY =====
-function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-}
-
-// ===== START QUIZ =====
-loadQuestions();
