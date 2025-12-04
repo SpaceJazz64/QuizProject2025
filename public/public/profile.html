@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Your Profile</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav>
+    <a href="index.html">Home</a>
+    <a href="quiz.html">Play Quiz</a>
+    <a href="leaderboard.html">Leaderboard</a>
+</nav>
+
+<div class="container">
+    <h1>Your Profile</h1>
+
+    <div id="userInfo">
+        <p><strong>Username:</strong> <span id="username"></span></p>
+        <p><strong>Email:</strong> <span id="email"></span></p>
+    </div>
+
+    <h2>Quiz History</h2>
+    <table id="historyTable">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Score</th>
+            <th>Total Questions</th>
+            <th>Date</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script src="profile.js"></script>
+</body>
+</html>

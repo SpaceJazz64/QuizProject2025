@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Play Quiz</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav>
+    <a href="index.html">Home</a>
+    <a href="quiz.html">Play Quiz</a>
+    <a href="profile.html">Profile</a>
+    <a href="leaderboard.html">Leaderboard</a>
+</nav>
+
+<div class="container">
+
+    <h1>Quiz Time!</h1>
+
+    <!-- Quiz Settings -->
+    <div class="quiz-settings">
+        <label>
+            Number of Questions:
+            <input type="number" id="numQuestions" value="10" min="1" max="50">
+        </label>
+
+        <label>
+            Difficulty:
+            <select id="difficulty">
+                <option value="easy">Easy</option>
+                <option value="medium" selected>Medium</option>
+                <option value="hard">Hard</option>
+            </select>
+        </label>
+
+        <button id="startQuizBtn">Start Quiz</button>
+    </div>
+
+    <!-- Quiz Questions -->
+    <div id="quizContainer" style="display:none;">
+        <h2 id="questionText"></h2>
+        <div id="answers"></div>
+        <button id="nextBtn">Next</button>
+    </div>
+
+</div>
+
+<script src="quiz.js" defer></script>
+</body>
+</html>
